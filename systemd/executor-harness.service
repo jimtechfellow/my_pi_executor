@@ -1,0 +1,21 @@
+[Unit]
+Description=Oracle Executor Harness Host - persistent Pi RPC parent (agent-neutral)
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+ExecStart=/home/ubuntu/.local/bin/executor-harness-with-bws.sh
+WorkingDirectory=/home/ubuntu/cc-connect-workspace
+Environment="PATH=/home/ubuntu/.local/bin:/home/ubuntu/.hermes/node/bin:/usr/local/bin:/usr/bin:/bin"
+Restart=on-failure
+RestartSec=5
+KillMode=mixed
+KillSignal=SIGTERM
+TimeoutStopSec=60
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target

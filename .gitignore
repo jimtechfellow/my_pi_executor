@@ -1,0 +1,14 @@
+# Local runtime / dev artifacts — never commit
+node_modules/
+*.log
+probe-*.mjs
+probe-*.log
+
+# Credentials and runtime state — never commit
+.env
+.env.*
+auth.json
+*.jsonl
+*.sock
+*.pid
+sessions/
