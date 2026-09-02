@@ -1,10 +1,10 @@
 {
   "name": "my_pi_executor",
-  "version": "4.0.0",
+  "version": "5.0.0",
   "private": true,
   "type": "module",
-  "description": "Task-scoped Pi Executor Skill using native Pi sessions and Missions.",
+  "description": "Task-scoped Pi Executor Skill using the public Pi Node SDK.",
   "scripts": {
-    "check": "node --check scripts/entrypoint.mjs && node --check scripts/pi_rpc.mjs && node --test tests/entrypoint.test.mjs"
+    "check": "node --test tests/entrypoint.test.mjs"
   }
 }

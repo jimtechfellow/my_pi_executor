@@ -1,46 +1,44 @@
 ---
 name: my_pi_executor
-description: Execute an authorized engineering or operations task in its own Pi parent runtime with a durable Mission, native HITL continuation, and independent review.
-version: 4.0.0
-status: active
-owner: jimtechfellow
-risk_level: high
+description: Execute an authorized engineering or operations task in an independent Pi parent with durable Mission state, native HITL continuation, and independent review.
 ---
 
 # my_pi_executor
 
-Use this Skill for authorized state-changing work that benefits from durable Pi Mission state and independent worker/reviewer verification.
+Use this Skill for authorized state-changing work that benefits from durable Mission state and independent verification.
 
-## Invocation
+## Invoke
 
-Each call directly starts its own `pi --mode rpc` process through `scripts/entrypoint.mjs`. There is no shared Host, service, socket, lock, queue, busy flag, registry, or Executor-specific recovery extension.
-
-Start a task by passing `{"title":"...","goal":"...","acceptance":["..."],"workspace":"/absolute/path"}` on stdin:
+Pass `{"title":"...","goal":"...","acceptance":["..."],"workspace":"/absolute/path"}` on stdin:
 
 ```text
 /home/ubuntu/.agents/skills/my_pi_executor/scripts/entrypoint.mjs run --workspace /absolute/path
 ```
 
-The result includes the Pi `sessionFile`. Keep it with the returned Mission id. HITL answer and recovery require both values so Pi can reopen the exact parent without reading its internal Mission files:
+The JSON result contains `sessionFile`; retain it with the returned Mission id. Reopen that exact parent for HITL or recovery:
 
 ```text
-entrypoint.mjs answer --workspace /absolute/path --session <session-file-or-id> --mission <mission-id>
-entrypoint.mjs recover --workspace /absolute/path --session <session-file-or-id> --mission <mission-id>
+entrypoint.mjs answer --workspace /absolute/path --session <session-file> --mission <mission-id>
+entrypoint.mjs recover --workspace /absolute/path --session <session-file> --mission <mission-id>
 ```
 
-`answer` receives `{"answer":"..."}` on stdin.
+`answer` accepts `{"answer":...}` on stdin.
 
-## Pi parent contract
+## Parent contract
 
-1. Create exactly one Mission with native `mission.create` before launching work.
-2. Launch `workflows/executor.js` asynchronously with that Mission id and the authorized workspace.
-3. Let the workflow own only its worker/reviewer/fix loop. The Pi parent owns Mission and HITL interaction.
-4. If the worker requests a decision, add exactly one decision with `mission.update` and return it to the caller.
-5. On `answer`, inspect the Mission with `mission.show`, resolve the same decision id, and continue the retained child through the native supervisor/resume path.
-6. On `recover`, use `mission.show`; re-present an open decision, resume only a natively resumable retained child, or fail closed.
-7. Never create a replacement Mission, repeat a completed side effect, or run a fourth review.
+When `ALREADY_ACTIVE_MY_PI_EXECUTOR_PARENT=1` appears in the request, this parent is the active executor. Follow this contract directly and never invoke this Skill, its entrypoint, or another parent Runtime recursively.
 
-## Result contract
+1. Before delegating, create exactly one Mission with native `mission.create` and use it for the whole call.
+2. Apply the installed pi-subagents parent-controlled review-loop technique: one implementation worker, fresh-context reviewers, then one fix worker when needed. Stop on acceptance, a genuine external/HITL dependency, or after three review rounds.
+3. Attach retained runs to the Mission. The Pi parent owns Mission updates and supervisor interaction; children do not.
+4. If a child requests a decision, record one open decision with `mission.update`, preserve the retained run, and return `NEEDS_DECISION` without guessing.
+5. On `answer`, use native `mission.show`, resolve that open decision, inspect native retained-child state, and continue only the same lineage.
+6. On `recover`, use `mission.show`; re-present an open decision, resume only a child that native `children.list` reports resumable, or fail closed.
+7. Never create replacement Mission state, repeat a completed side effect, or add another persistence, lifecycle, or coordination mechanism.
+
+Independent invocations own independent Node processes and Pi `AgentSession` parents. Only work inside one parent may be serialized.
+
+## Result
 
 ```text
 STATUS: PASS | FAILED | NEEDS_DECISION | EXTERNAL_DEPENDENCY
@@ -55,4 +53,4 @@ REMAINING:
 ARTIFACTS:
 ```
 
-Mission state and session state are owned by Pi and `pi-subagents`. This repository must not parse, mirror, or replace those stores.
+Pi and pi-subagents exclusively own Mission and session state. Do not parse or mirror their storage.

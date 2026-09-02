@@ -1,23 +1,19 @@
 # my_pi_executor
 
-The repository root is the complete Skill and the only source authority for its behavior.
+This repository root is the complete Skill and the sole source authority.
 
-## Files
+Only two runtime files are needed: `SKILL.md` defines orchestration and recovery invariants; `scripts/entrypoint.mjs` opens one task-scoped Pi `AgentSessionRuntime` through Pi's public Node SDK. When necessary, the Node entrypoint obtains the BWS access token from systemd credentials and selects only supported provider keys from the native `bws` response. `tests/entrypoint.test.mjs` verifies the public boundary and forbidden architecture.
 
-- `SKILL.md` defines invocation and orchestration.
-- `scripts/entrypoint.mjs` starts one independent Pi RPC parent per call and optionally obtains provider credentials through the host's generic `bws-safe` broker.
-- `scripts/pi_rpc.mjs` implements only Pi's documented LF-delimited RPC transport.
-- `workflows/executor.js` implements the bounded worker/reviewer/fix loop that Pi does not provide as a single native operation.
-- `tests/entrypoint.test.mjs` verifies the public invocation boundary, independent parents, native resume arguments, and forbidden architecture.
+The implementation targets the server-installed `@earendil-works/pi-coding-agent` 0.84.2 public SDK and `pi-subagents` 0.59.0 native Mission, retained-child, and review-loop capabilities. It does not read Pi storage or implement transport, scheduling, review workflow, recovery state, or shared lifecycle infrastructure.
 
-Runtime dependencies are Node.js, Pi 0.84.2-compatible RPC/session behavior, and `pi-subagents` 0.59.0-compatible Mission/workflow actions. Provider credentials and generated Pi Mission/session state remain external.
+The verified default model is `openai/gpt-5.6-terra`; `MY_PI_EXECUTOR_MODEL=provider/model` may override it.
 
-The implementation follows Pi's documented [RPC protocol](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/rpc.md) and [session resume interface](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/sessions.md), plus `pi-subagents`' native [Mission management and recovery actions](https://github.com/nicobailon/pi-subagents/blob/main/docs/missions.md).
+Authoritative interfaces:
 
-Production is a read-only materialized copy at `/home/ubuntu/.agents/skills/my_pi_executor`, deployed from an immutable commit recorded in the existing Skill governance registry. Hermes and Codex discover that same directory. No Executor-specific plugin, routing Skill, daemon, socket, global Host, or server-only implementation is part of the call path.
+- [Pi SDK](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/sdk.md)
+- [Pi sessions](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/sessions.md)
+- [pi-subagents Missions](https://github.com/nicobailon/pi-subagents/blob/main/docs/missions.md)
 
-Validation:
+Production is materialized from an immutable approved commit at `/home/ubuntu/.agents/skills/my_pi_executor`; Hermes and Codex use that same directory.
 
-```text
-npm run check
-```
+Validate with `npm run check`.
