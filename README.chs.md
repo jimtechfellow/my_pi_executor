@@ -7,10 +7,13 @@
 ## 仓库结构
 
 ```text
+.gitignore
+README.md
+README.chs.md
 SKILL.md
+package.json
 scripts/entrypoint.mjs
 tests/entrypoint.test.mjs
-package.json
 ```
 
 - `SKILL.md`：定义 Skill 契约和 parent 编排规则。
@@ -21,8 +24,8 @@ package.json
 ## 运行要求
 
 - Node.js
-- 兼容版本的 Pi
-- `pi-subagents`
+- 已使用 `@earendil-works/pi-coding-agent` 0.84.2 验证
+- 已使用 `pi-subagents` 0.59.0 验证
 - 模型供应商凭据
 
 ## 使用方法
