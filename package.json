@@ -1,7 +1,10 @@
 {
-  "name": "executor-harness",
-  "version": "0.1.0",
+  "name": "executor-runtime",
+  "version": "3.0.0",
   "private": true,
   "type": "module",
-  "description": "Thin Pi-SDK host boundary for the Oracle Executor (agent-neutral). No daemon, no second DB."
+  "description": "Task-scoped Pi runtime bundled with the canonical Executor Skill.",
+  "scripts": {
+    "check": "node --check executor/scripts/runtime.mjs && node --check executor/scripts/pi_rpc.mjs && node --check executor/scripts/mission_store.mjs && node --test tests/architecture.test.mjs"
+  }
 }
