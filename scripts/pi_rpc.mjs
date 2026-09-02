@@ -18,6 +18,7 @@ export class PiRpc extends EventEmitter {
     this.pending = new Map();
     this.exited = false;
     this.exitInfo = null;
+    this.lastAgentError = null;
   }
 
   start() {
@@ -82,6 +83,12 @@ export class PiRpc extends EventEmitter {
           this.emit('response', obj);
         }
       } else {
+        if (obj.type === 'agent_end') {
+          const assistant = [...(obj.messages || [])].reverse().find((message) => message?.role === 'assistant');
+          this.lastAgentError = assistant && ['error', 'aborted'].includes(assistant.stopReason)
+            ? (assistant.errorMessage || `Pi request ${assistant.stopReason}`)
+            : null;
+        }
         this.emit('event', obj);
         this.emit(obj.type, obj);
       }

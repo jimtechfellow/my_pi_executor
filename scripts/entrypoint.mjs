@@ -118,13 +118,16 @@ async function runTurn({ workspace, session, prompt, name }) {
     const response = await rpc.prompt(prompt);
     if (!response.success) throw new Error(response.error || 'Pi rejected prompt');
     await settled;
+    if (rpc.lastAgentError) throw new Error(`Pi provider failed: ${rpc.lastAgentError}`);
     const final = await rpc.getLastAssistantText();
+    if (!final?.success) throw new Error(final?.error || 'Pi could not return its final response');
+    if (!final.data?.text?.trim()) throw new Error('Pi settled without a final response');
     return {
       status: 'SETTLED',
       piPid: rpc.pid,
       sessionId: state.sessionId,
       sessionFile: state.sessionFile,
-      final: final?.data?.text || '',
+      final: final.data.text,
     };
   } finally {
     rpc.stop();

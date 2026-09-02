@@ -41,9 +41,13 @@ process.stdin.on('data', (chunk) => {
       process.stdout.write(JSON.stringify({ type: 'response', id: command.id, command: command.type, success: true, data: { sessionId: 'session-' + process.cwd() + '-' + process.pid, sessionFile: '/tmp/session-' + process.pid + '.jsonl' } }) + '\\n');
     } else if (command.type === 'prompt') {
       process.stdout.write(JSON.stringify({ type: 'response', id: command.id, command: command.type, success: true }) + '\\n');
+      if (process.env.FAKE_PI_ERROR === '1') {
+        process.stdout.write(JSON.stringify({ type: 'agent_end', messages: [{ role: 'assistant', stopReason: 'error', errorMessage: '402: Insufficient Balance', content: [] }], willRetry: false }) + '\\n');
+      }
       process.stdout.write(JSON.stringify({ type: 'agent_settled' }) + '\\n');
     } else if (command.type === 'get_last_assistant_text') {
-      process.stdout.write(JSON.stringify({ type: 'response', id: command.id, command: command.type, success: true, data: { text: 'MISSION_ID: mission-test\\nSTATUS: PASS' } }) + '\\n');
+      const text = process.env.FAKE_PI_ERROR === '1' ? null : 'MISSION_ID: mission-test\\nSTATUS: PASS';
+      process.stdout.write(JSON.stringify({ type: 'response', id: command.id, command: command.type, success: true, data: { text } }) + '\\n');
     } else if (command.type === 'abort') process.exit(0);
   }
 });
@@ -100,4 +104,18 @@ test('answer resumes an explicit Pi parent session and Mission lineage', async (
   const output = JSON.parse(result.stdout);
   assert.equal(output.sessionFile, `/tmp/session-${output.piPid}.jsonl`);
   assert.match(output.final, /MISSION_ID: mission-test/);
+});
+
+test('provider error fails closed instead of reporting a settled empty result', async () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'my-pi-executor-test-'));
+  const pi = fakePi(tmp);
+  const input = { title: 'test', goal: 'do a bounded test', acceptance: ['returns PASS'], workspace: tmp };
+  const result = await run(['run'], input, {
+    MY_PI_EXECUTOR_PI_BIN: pi,
+    DEEPSEEK_API_KEY: 'test-only',
+    FAKE_PI_ERROR: '1',
+  });
+  assert.notEqual(result.code, 0);
+  assert.match(result.stderr, /402: Insufficient Balance/);
+  assert.equal(result.stdout, '');
 });
