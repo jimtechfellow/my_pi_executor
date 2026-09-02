@@ -8,6 +8,7 @@ Canonical repository for the complete Executor unit: **runtime + executor Skill 
 Hermes Main
   -> operator
   -> executor Skill
+     -> scripts/entrypoint.sh
      -> scripts/runtime.mjs
      -> task-scoped pi --mode rpc
      -> Pi parent session
@@ -30,6 +31,7 @@ Each independent call creates its own Pi RPC process/session. When a turn finish
 executor/
   SKILL.md
   scripts/
+    entrypoint.sh
     runtime.mjs
     pi_rpc.mjs
     mission_store.mjs
