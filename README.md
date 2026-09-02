@@ -2,6 +2,18 @@
 
 Canonical source repository for the complete `MY_executor` unit: **runtime + Skill + workflow**.
 
+## Review entry points
+
+For human review, start here:
+
+1. `ARCHITECTURE.md` — implementation boundary, allowed external layers, repository-closure acceptance.
+2. `DEPENDENCIES.md` — maintained external runtime, deployment, path, credential, and compatibility dependencies.
+3. `MY_executor/SKILL.md` — canonical Executor behavior contract.
+4. `MY_executor/scripts/` and `MY_executor/workflows/` — implementation owned by that Skill/runtime version.
+5. `migration/` and `tests/` — deployment cleanup and architectural regression checks.
+
+A production change is incomplete if unique Executor implementation exists outside this repository or a material external dependency is not declared in `DEPENDENCIES.md`.
+
 ## Final call path
 
 ```text
