@@ -32,7 +32,7 @@ The bundled entry point is:
 
 It injects no Executor state. If model credentials are already present it runs the runtime directly; otherwise it may use the host's existing `bws-safe` credential broker per invocation.
 
-Hermes can invoke it directly from this Skill using `${HERMES_SKILL_DIR}/scripts/entrypoint.sh` through `terminal`. Codex uses the installed shared path (normally `/home/ubuntu/.agents/skills/executor/scripts/entrypoint.sh`). No Executor-specific Hermes plugin or persistent harness service is required.
+Hermes invokes it from this Skill through `terminal` as `sh ${HERMES_SKILL_DIR}/scripts/entrypoint.sh ...`. Codex uses `sh /home/ubuntu/.agents/skills/executor/scripts/entrypoint.sh ...`. No Executor-specific Hermes plugin or persistent harness service is required.
 
 ### Start a task
 
@@ -45,7 +45,7 @@ Pass JSON on stdin:
 Run:
 
 ```bash
-${HERMES_SKILL_DIR}/scripts/entrypoint.sh run --workspace /absolute/path
+sh ${HERMES_SKILL_DIR}/scripts/entrypoint.sh run --workspace /absolute/path
 ```
 
 For Codex, use the installed absolute path instead of `${HERMES_SKILL_DIR}`.
@@ -55,19 +55,19 @@ For Codex, use the installed absolute path instead of `${HERMES_SKILL_DIR}`.
 Pass `{"answer":"..."}` on stdin and run:
 
 ```bash
-${HERMES_SKILL_DIR}/scripts/entrypoint.sh answer --workspace /absolute/path --mission <mission-id>
+sh ${HERMES_SKILL_DIR}/scripts/entrypoint.sh answer --workspace /absolute/path --mission <mission-id>
 ```
 
 ### Recover a non-terminal Mission
 
 ```bash
-${HERMES_SKILL_DIR}/scripts/entrypoint.sh recover --workspace /absolute/path --mission <mission-id>
+sh ${HERMES_SKILL_DIR}/scripts/entrypoint.sh recover --workspace /absolute/path --mission <mission-id>
 ```
 
 ### Read status
 
 ```bash
-${HERMES_SKILL_DIR}/scripts/entrypoint.sh status --workspace /absolute/path [--mission <mission-id>]
+sh ${HERMES_SKILL_DIR}/scripts/entrypoint.sh status --workspace /absolute/path [--mission <mission-id>]
 ```
 
 ## Parent orchestration contract
