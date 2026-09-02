@@ -10,7 +10,7 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const SKILL_DIR = path.resolve(HERE, '..');
 const SKILL_MD = path.join(SKILL_DIR, 'SKILL.md');
 const DEFAULT_WORKSPACE = process.env.EXECUTOR_WORKSPACE || process.cwd();
-const DEFAULT_MODEL = process.env.EXECUTOR_MODEL || null;
+const DEFAULT_MODEL = process.env.EXECUTOR_MODEL || 'deepseek/deepseek-v4-pro';
 const DEFAULT_THINKING = process.env.EXECUTOR_THINKING || 'medium';
 const DEFAULT_SESSION_DIR = process.env.EXECUTOR_SESSION_DIR || path.join(os.homedir(), '.pi', 'agent', 'sessions', 'executor');
 
