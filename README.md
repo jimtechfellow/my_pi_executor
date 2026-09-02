@@ -1,34 +1,30 @@
-# Executor Runtime
+# MY_executor Runtime
 
-Canonical source repository for the complete Executor unit: **runtime + executor Skill + workflow**.
+Canonical source repository for the complete `MY_executor` unit: **runtime + Skill + workflow**.
 
 ## Final call path
 
 ```text
 Hermes Main
   -> operator
-  -> governed read-only executor Skill
+  -> governed read-only MY_executor Skill
      -> scripts/entrypoint.sh
      -> scripts/runtime.mjs
      -> task-scoped pi --mode rpc
      -> Pi parent session
      -> durable Mission
      -> workflows/executor.js
-     -> worker / strict-fork reviewer
 
 Codex
-  -> same governed read-only executor Skill
-     -> same task-scoped runtime path
+  -> same governed read-only MY_executor Skill
 ```
 
 There is no Executor-specific daemon, Unix socket, global Host, global `busy`, or single-active-Mission policy.
 
-Each independent call creates its own Pi RPC process/session. When a turn finishes, the process may exit. Mission and Pi session state remain durable. `answer` and `recover` resume the original parent with Pi's native `--session` support.
-
 ## Repository layout
 
 ```text
-executor/
+MY_executor/
   SKILL.md
   scripts/
     entrypoint.sh
@@ -43,31 +39,27 @@ migration/
 
 ## Development and release boundary
 
-This repository is the **development/source authority** for Executor. Production Agents do not run from a mutable clone or symlink to this repository.
-
-After development and validation succeed:
+This repository is the development/source authority. Production never runs from a mutable clone or symlink.
 
 ```text
 source commit
-  -> pin exact immutable SHA in Agent-Skill-Source governance registry
+  -> pin exact immutable SHA in the existing Agent-Skill-Source governance registry
   -> governance validation
   -> skill-sync
-  -> ~/.agents/skills/executor (read-only deployment)
+  -> ~/.agents/skills/MY_executor (read-only deployment)
   -> Hermes operator / Codex consume that deployed copy
 ```
 
-Executor is a first-party system Skill, not a classic expert/`高手 Skill`, but it uses the same fixed-version, reviewable, read-only deployment mechanics.
-
-A new source commit has no production effect until the governance registry explicitly approves that exact SHA.
+`MY_` is only a naming convention for our own Skills. It does not create a second governance category, registry, directory, or deployment path.
 
 ## Hermes cleanup
 
-After the governed Executor release is present at `~/.agents/skills/executor`, Hermes requires only:
+After the governed `MY_executor` release is present, Hermes requires only:
 
 ```text
-Main/control -> operator -> executor Skill
+Main/control -> operator -> MY_executor Skill
 ```
 
-The legacy `persistent-executor-routing` Skill, `pi-executor-bridge` plugin, `executor-harness.service`, global socket, and Host are obsolete Executor layers. `migration/cleanup_legacy_oracle.sh` retires only those legacy layers **after verifying the governed Skill is already deployed**; it never installs or replaces the Skill itself.
+The legacy `persistent-executor-routing` Skill, `pi-executor-bridge` plugin, `executor-harness.service`, global socket, and Host are obsolete Executor layers. `migration/cleanup_legacy_oracle.sh` retires only those legacy layers after verifying `MY_executor` is already deployed.
 
-`Ask Hermes`, custom MCPs, CC Connect MCPs, and other messaging bridges are outside this repository and outside this migration.
+`Ask Hermes`, custom MCPs, CC Connect MCPs, and other messaging bridges are out of scope.
