@@ -26,11 +26,13 @@ The runtime is task-scoped. There is no global Executor Host, global socket, glo
 
 ## Entry point
 
-The bundled runtime is:
+The bundled entry point is:
 
-`./scripts/runtime.mjs`
+`./scripts/entrypoint.sh`
 
-Hermes can invoke it directly from this Skill using `${HERMES_SKILL_DIR}/scripts/runtime.mjs` through `terminal`. Codex uses the installed shared path (normally `/home/ubuntu/.agents/skills/executor/scripts/runtime.mjs`). No Executor-specific Hermes plugin or persistent harness service is required.
+It injects no Executor state. If model credentials are already present it runs the runtime directly; otherwise it may use the host's existing `bws-safe` credential broker per invocation.
+
+Hermes can invoke it directly from this Skill using `${HERMES_SKILL_DIR}/scripts/entrypoint.sh` through `terminal`. Codex uses the installed shared path (normally `/home/ubuntu/.agents/skills/executor/scripts/entrypoint.sh`). No Executor-specific Hermes plugin or persistent harness service is required.
 
 ### Start a task
 
@@ -43,7 +45,7 @@ Pass JSON on stdin:
 Run:
 
 ```bash
-node ${HERMES_SKILL_DIR}/scripts/runtime.mjs run --workspace /absolute/path
+${HERMES_SKILL_DIR}/scripts/entrypoint.sh run --workspace /absolute/path
 ```
 
 For Codex, use the installed absolute path instead of `${HERMES_SKILL_DIR}`.
@@ -53,19 +55,19 @@ For Codex, use the installed absolute path instead of `${HERMES_SKILL_DIR}`.
 Pass `{"answer":"..."}` on stdin and run:
 
 ```bash
-node ${HERMES_SKILL_DIR}/scripts/runtime.mjs answer --workspace /absolute/path --mission <mission-id>
+${HERMES_SKILL_DIR}/scripts/entrypoint.sh answer --workspace /absolute/path --mission <mission-id>
 ```
 
 ### Recover a non-terminal Mission
 
 ```bash
-node ${HERMES_SKILL_DIR}/scripts/runtime.mjs recover --workspace /absolute/path --mission <mission-id>
+${HERMES_SKILL_DIR}/scripts/entrypoint.sh recover --workspace /absolute/path --mission <mission-id>
 ```
 
 ### Read status
 
 ```bash
-node ${HERMES_SKILL_DIR}/scripts/runtime.mjs status --workspace /absolute/path [--mission <mission-id>]
+${HERMES_SKILL_DIR}/scripts/entrypoint.sh status --workspace /absolute/path [--mission <mission-id>]
 ```
 
 ## Parent orchestration contract
