@@ -2,8 +2,9 @@ import { spawn } from 'node:child_process';
 import { EventEmitter } from 'node:events';
 
 export class PiRpc extends EventEmitter {
-  constructor({ cwd, model, thinking = 'medium', sessionDir, session = null, name = 'executor-parent' }) {
+  constructor({ piBin = 'pi', cwd, model, thinking = 'medium', sessionDir, session = null, name = 'my_pi_executor-parent' }) {
     super();
+    this.piBin = piBin;
     this.cwd = cwd;
     this.model = model;
     this.thinking = thinking;
@@ -15,11 +16,8 @@ export class PiRpc extends EventEmitter {
     this.buf = '';
     this.reqSeq = 0;
     this.pending = new Map();
-    this.stderrBuf = [];
     this.exited = false;
     this.exitInfo = null;
-    this.sessionId = null;
-    this.sessionFile = null;
   }
 
   start() {
@@ -30,13 +28,16 @@ export class PiRpc extends EventEmitter {
     if (this.session) args.push('--session', this.session);
     if (this.name) args.push('--name', this.name);
 
-    this.proc = spawn('pi', args, { cwd: this.cwd, env: process.env, stdio: ['pipe', 'pipe', 'pipe'] });
+    this.proc = spawn(this.piBin, args, {
+      cwd: this.cwd,
+      env: process.env,
+      stdio: ['pipe', 'pipe', 'pipe'],
+      shell: false,
+    });
     this.pid = this.proc.pid;
     this.proc.stdout.on('data', (d) => this.#onData(d.toString('utf8')));
     this.proc.stderr.on('data', (d) => {
       const s = d.toString('utf8');
-      this.stderrBuf.push(s);
-      if (this.stderrBuf.length > 300) this.stderrBuf.shift();
       this.emit('stderr', s);
     });
     this.proc.on('error', (e) => {
@@ -118,12 +119,8 @@ export class PiRpc extends EventEmitter {
   async initialize() {
     const state = await this.getState();
     if (!state?.success || !state.data) throw new Error(`pi get_state failed: ${state?.error || 'unknown'}`);
-    this.sessionId = state.data.sessionId || null;
-    this.sessionFile = state.data.sessionFile || null;
     return state.data;
   }
-
-  tailStderr(n = 20) { return this.stderrBuf.slice(-n).join(''); }
 
   stop() {
     if (!this.proc || this.exited) return;

@@ -1,80 +1,23 @@
 # my_pi_executor
 
-Canonical source repository for the complete `my_pi_executor` Skill: **Skill + runtime + workflow**.
+The repository root is the complete Skill and the only source authority for its behavior.
 
-The repository root is the Skill root. There is no nested Skill directory.
+## Files
 
-## Review entry points
+- `SKILL.md` defines invocation and orchestration.
+- `scripts/entrypoint.mjs` starts one independent Pi RPC parent per call and optionally obtains provider credentials through the host's generic `bws-safe` broker.
+- `scripts/pi_rpc.mjs` implements only Pi's documented LF-delimited RPC transport.
+- `workflows/executor.js` implements the bounded worker/reviewer/fix loop that Pi does not provide as a single native operation.
+- `tests/entrypoint.test.mjs` verifies the public invocation boundary, independent parents, native resume arguments, and forbidden architecture.
 
-1. `SKILL.md` — canonical Executor behavior contract.
-2. `scripts/` — task-scoped runtime and Pi RPC/session integration.
-3. `workflows/` — worker/reviewer workflow.
-4. `ARCHITECTURE.md` — implementation boundary and repository-closure acceptance.
-5. `DEPENDENCIES.md` — maintained runtime/deployment dependencies.
-6. `migration/` and `tests/` — cleanup and regression checks.
+Runtime dependencies are Node.js, Pi 0.84.2-compatible RPC/session behavior, and `pi-subagents` 0.59.0-compatible Mission/workflow actions. Provider credentials and generated Pi Mission/session state remain external.
 
-A production change is incomplete if unique Executor implementation exists outside this repository or a material external dependency is not declared in `DEPENDENCIES.md`.
+The implementation follows Pi's documented [RPC protocol](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/rpc.md) and [session resume interface](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/sessions.md), plus `pi-subagents`' native [Mission management and recovery actions](https://github.com/nicobailon/pi-subagents/blob/main/docs/missions.md).
 
-## Final call path
+Production is a read-only materialized copy at `/home/ubuntu/.agents/skills/my_pi_executor`, deployed from an immutable commit recorded in the existing Skill governance registry. Hermes and Codex discover that same directory. No Executor-specific plugin, routing Skill, daemon, socket, global Host, or server-only implementation is part of the call path.
 
-```text
-Hermes Main
-  -> operator
-  -> governed read-only my_pi_executor Skill
-     -> scripts/entrypoint.sh
-     -> scripts/runtime.mjs
-     -> task-scoped pi --mode rpc
-     -> Pi parent session
-     -> durable Mission
-     -> workflows/executor.js
-
-Codex
-  -> same governed read-only my_pi_executor Skill
-```
-
-There is no Executor-specific daemon, Unix socket, global Host, global `busy`, or single-active-Mission policy.
-
-## Repository layout
+Validation:
 
 ```text
-SKILL.md
-scripts/
-  entrypoint.sh
-  runtime.mjs
-  pi_rpc.mjs
-  mission_store.mjs
-workflows/
-  executor.js
-tests/
-migration/
-ARCHITECTURE.md
-DEPENDENCIES.md
-README.md
+npm run check
 ```
-
-## Development and release boundary
-
-This repository is the development/source authority. Production never runs from a mutable clone or symlink.
-
-```text
-source commit
-  -> pin exact immutable SHA in the existing Agent-Skill-Source governance registry
-  -> governance validation
-  -> skill-sync
-  -> ~/.agents/skills/my_pi_executor (read-only deployment)
-  -> Hermes operator / Codex consume that deployed copy
-```
-
-The governance registry must point to this repository root; no subpath is required.
-
-## Hermes cleanup
-
-After the governed `my_pi_executor` release is present, Hermes requires only:
-
-```text
-Main/control -> operator -> my_pi_executor Skill
-```
-
-The legacy `persistent-executor-routing` Skill, `pi-executor-bridge` plugin, `executor-harness.service`, global socket, Host, and legacy shared `executor` Skill are obsolete Executor layers. `migration/cleanup_legacy_oracle.sh` retires only those legacy layers after verifying `my_pi_executor` is already deployed.
-
-`Ask Hermes`, custom MCPs, CC Connect MCPs, and other messaging bridges are out of scope.

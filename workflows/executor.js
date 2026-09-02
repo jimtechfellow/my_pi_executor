@@ -1,5 +1,4 @@
-// Executor worker/reviewer workflow. Runtime and parent lifecycle live in the
-// same executor Skill; this file only owns the child execution/review loop.
+// The only custom policy here is the bounded worker/reviewer/fix loop.
 
 const workerTask = [
   'Perform the authorized task from the parent context.',
@@ -34,13 +33,6 @@ const reviewerSchema = {
   additionalProperties: false
 };
 
-const phase = typeof state !== 'undefined' ? state : null;
-
-if (phase) {
-  await phase.set('status', 'worker-running');
-  await phase.set('nextReadyAction', 'worker running');
-}
-
 let worker = await runs.run('worker-initial', {
   agent: 'worker',
   context: 'fork',
@@ -50,11 +42,6 @@ let worker = await runs.run('worker-initial', {
 
 const rounds = [];
 for (let round = 1; round <= 3; round += 1) {
-  if (phase) {
-    await phase.set('status', `review-round-${round}`);
-    await phase.set('nextReadyAction', `review round ${round}`);
-  }
-
   let review;
   try {
     review = await runs.run(`review-${round}`, {
@@ -64,19 +51,11 @@ for (let round = 1; round <= 3; round += 1) {
       outputSchema: reviewerSchema
     });
   } catch (err) {
-    if (phase) {
-      await phase.set('status', 'failed');
-      await phase.set('nextReadyAction', '');
-    }
     rounds.push({ round, runId: null, ok: false, verdict: 'FAIL', evidence: [], failClosed: true, error: String(err?.message || err) });
     return { status: 'FAILED', rounds, workerRunId: worker.runId, failClosed: true };
   }
 
   if (!review.ok) {
-    if (phase) {
-      await phase.set('status', 'failed');
-      await phase.set('nextReadyAction', '');
-    }
     rounds.push({ round, runId: review.runId, ok: false, verdict: review.structuredOutput?.verdict, evidence: review.structuredOutput?.evidence, failClosed: true });
     return { status: 'FAILED', rounds, workerRunId: worker.runId, failClosed: true };
   }
@@ -85,18 +64,10 @@ for (let round = 1; round <= 3; round += 1) {
   rounds.push({ round, runId: review.runId, ok: review.ok, verdict, evidence: review.structuredOutput?.evidence });
 
   if (verdict === 'PASS') {
-    if (phase) {
-      await phase.set('status', 'completed');
-      await phase.set('nextReadyAction', '');
-    }
     return { status: 'PASS', rounds, workerRunId: worker.runId };
   }
 
   if (round === 3) {
-    if (phase) {
-      await phase.set('status', 'failed');
-      await phase.set('nextReadyAction', '');
-    }
     return { status: 'FAILED', rounds, workerRunId: worker.runId };
   }
 
