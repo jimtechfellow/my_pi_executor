@@ -7,10 +7,13 @@ Each invocation creates an independent Pi parent runtime. Mission/session state,
 ## Repository
 
 ```text
+.gitignore
+README.md
+README.chs.md
 SKILL.md
+package.json
 scripts/entrypoint.mjs
 tests/entrypoint.test.mjs
-package.json
 ```
 
 - `SKILL.md` defines the Skill contract and parent orchestration rules.
@@ -21,8 +24,8 @@ package.json
 ## Requirements
 
 - Node.js
-- a compatible Pi installation
-- `pi-subagents`
+- tested with `@earendil-works/pi-coding-agent` 0.84.2
+- tested with `pi-subagents` 0.59.0
 - model-provider credentials
 
 ## Usage
