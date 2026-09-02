@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-skill_dir="${HOME}/.agents/skills/MY_executor"
+skill_dir="${HOME}/.agents/skills/my_pi_executor"
 ts="$(date -u +%Y%m%dT%H%M%SZ)"
 backup_root="${HOME}/.local/state/executor_migration_backup/${ts}"
 
 if [ ! -f "$skill_dir/SKILL.md" ]; then
   echo "STATUS: FAIL"
-  echo "REASON: governed MY_executor Skill is not deployed at $skill_dir"
+  echo "REASON: governed my_pi_executor Skill is not deployed at $skill_dir"
   exit 1
 fi
 
 if [ -L "$skill_dir" ]; then
   echo "STATUS: FAIL"
-  echo "REASON: MY_executor is a symlink; production must be a governed materialized read-only release"
+  echo "REASON: my_pi_executor is a symlink; production must be a governed materialized read-only release"
   exit 1
 fi
 
@@ -30,6 +30,7 @@ backup_path() {
 backup_path "${HOME}/.hermes/skills/autonomous-ai-agents/persistent-executor-routing"
 backup_path "${HOME}/.hermes/profiles/operator/plugins/pi-executor-bridge"
 backup_path "${HOME}/.agents/skills/executor"
+backup_path "${HOME}/.agents/skills/MY_executor"
 
 if systemctl --user list-unit-files executor-harness.service >/dev/null 2>&1; then
   systemctl --user disable --now executor-harness.service || true

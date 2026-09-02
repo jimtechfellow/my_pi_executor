@@ -1,5 +1,5 @@
 ---
-name: MY_executor
+name: my_pi_executor
 description: Execute an authorized engineering or operations task through a task-scoped Pi runtime, durable Mission state, native HITL continuation, and independent worker/reviewer verification.
 version: 3.0.0
 status: active
@@ -9,13 +9,13 @@ risk_level: high
 tags: [executor, pi, mission, hitl, recovery, worker, reviewer, runtime]
 ---
 
-# MY_executor
+# my_pi_executor
 
-This directory is the complete Executor unit: **Skill + Runtime + workflow**. It is the sole authority for Executor implementation behavior.
+This repository root is the complete Executor unit: **Skill + Runtime + workflow**. It is the sole authority for Executor implementation behavior.
 
 ## Boundary
 
-Calling agents only decide **when** to use MY_executor and pass the authorized goal, acceptance criteria, workspace, and exclusions. They do not implement Mission, HITL, recovery, reviewer, runtime-lifecycle, or concurrency behavior themselves.
+Calling agents only decide **when** to use `my_pi_executor` and pass the authorized goal, acceptance criteria, workspace, and exclusions. They do not implement Mission, HITL, recovery, reviewer, runtime-lifecycle, or concurrency behavior themselves.
 
 The runtime is task-scoped. There is no global Executor Host, global socket, global busy flag, global queue, or single-active-Mission policy.
 
@@ -28,7 +28,7 @@ The runtime is task-scoped. There is no global Executor Host, global socket, glo
 
 The bundled entry point is `./scripts/entrypoint.sh`.
 
-Hermes invokes it from this Skill through `terminal` as `sh ${HERMES_SKILL_DIR}/scripts/entrypoint.sh ...`. Codex uses `sh /home/ubuntu/.agents/skills/MY_executor/scripts/entrypoint.sh ...`. No Executor-specific Hermes plugin or persistent harness service is required.
+Hermes invokes it from this Skill through `terminal` as `sh ${HERMES_SKILL_DIR}/scripts/entrypoint.sh ...`. Codex uses `sh /home/ubuntu/.agents/skills/my_pi_executor/scripts/entrypoint.sh ...`. No Executor-specific Hermes plugin or persistent harness service is required.
 
 ### Start a task
 

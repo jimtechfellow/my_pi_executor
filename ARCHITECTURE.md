@@ -2,17 +2,15 @@
 
 ## Authority
 
-This repository is the canonical implementation authority for `MY_executor`. The implementation boundary is the repository, not an Oracle server directory, Hermes profile, systemd unit, or temporary deployment path.
+This repository is the canonical implementation authority for `my_pi_executor`. The repository root is the Skill root and the complete versioned implementation unit.
 
-`MY_executor/` is one versioned unit containing the Skill and the runtime code that jointly define Executor behavior. A production deployment must correspond to a reviewable repository commit.
+The implementation boundary is this repository, not an Oracle server directory, Hermes profile, systemd unit, temporary deployment path, or nested Skill subdirectory.
 
 ## External Call Boundary
 
-The intended caller boundary is deliberately small:
-
 ```text
-Hermes Main -> operator -> MY_executor Skill
-Codex -> MY_executor Skill
+Hermes Main -> operator -> my_pi_executor Skill
+Codex -> my_pi_executor Skill
 ```
 
 Callers decide when to invoke the Skill and provide the authorized task context. Executor-specific lifecycle, concurrency, recovery, workflow, and validation behavior must not be reimplemented in caller Profiles, plugins, routing Skills, services, or bridges.
@@ -23,9 +21,9 @@ Callers decide when to invoke the Skill and provide the authorized task context.
 
 Implementation-owned artifacts belong here, including:
 
-- the Skill definition;
-- runtime/process-control code;
-- workflow code;
+- `SKILL.md`;
+- runtime/process-control code under `scripts/`;
+- workflow code under `workflows/`;
 - task/session lifecycle and recovery implementation;
 - install/migration/cleanup scripts;
 - tests;

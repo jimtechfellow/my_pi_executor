@@ -1,16 +1,17 @@
-# MY_executor Runtime
+# my_pi_executor
 
-Canonical source repository for the complete `MY_executor` unit: **runtime + Skill + workflow**.
+Canonical source repository for the complete `my_pi_executor` Skill: **Skill + runtime + workflow**.
+
+The repository root is the Skill root. There is no nested Skill directory.
 
 ## Review entry points
 
-For human review, start here:
-
-1. `ARCHITECTURE.md` — implementation boundary, allowed external layers, repository-closure acceptance.
-2. `DEPENDENCIES.md` — maintained external runtime, deployment, path, credential, and compatibility dependencies.
-3. `MY_executor/SKILL.md` — canonical Executor behavior contract.
-4. `MY_executor/scripts/` and `MY_executor/workflows/` — implementation owned by that Skill/runtime version.
-5. `migration/` and `tests/` — deployment cleanup and architectural regression checks.
+1. `SKILL.md` — canonical Executor behavior contract.
+2. `scripts/` — task-scoped runtime and Pi RPC/session integration.
+3. `workflows/` — worker/reviewer workflow.
+4. `ARCHITECTURE.md` — implementation boundary and repository-closure acceptance.
+5. `DEPENDENCIES.md` — maintained runtime/deployment dependencies.
+6. `migration/` and `tests/` — cleanup and regression checks.
 
 A production change is incomplete if unique Executor implementation exists outside this repository or a material external dependency is not declared in `DEPENDENCIES.md`.
 
@@ -19,7 +20,7 @@ A production change is incomplete if unique Executor implementation exists outsi
 ```text
 Hermes Main
   -> operator
-  -> governed read-only MY_executor Skill
+  -> governed read-only my_pi_executor Skill
      -> scripts/entrypoint.sh
      -> scripts/runtime.mjs
      -> task-scoped pi --mode rpc
@@ -28,7 +29,7 @@ Hermes Main
      -> workflows/executor.js
 
 Codex
-  -> same governed read-only MY_executor Skill
+  -> same governed read-only my_pi_executor Skill
 ```
 
 There is no Executor-specific daemon, Unix socket, global Host, global `busy`, or single-active-Mission policy.
@@ -36,17 +37,19 @@ There is no Executor-specific daemon, Unix socket, global Host, global `busy`, o
 ## Repository layout
 
 ```text
-MY_executor/
-  SKILL.md
-  scripts/
-    entrypoint.sh
-    runtime.mjs
-    pi_rpc.mjs
-    mission_store.mjs
-  workflows/
-    executor.js
+SKILL.md
+scripts/
+  entrypoint.sh
+  runtime.mjs
+  pi_rpc.mjs
+  mission_store.mjs
+workflows/
+  executor.js
+tests/
 migration/
-  cleanup_legacy_oracle.sh
+ARCHITECTURE.md
+DEPENDENCIES.md
+README.md
 ```
 
 ## Development and release boundary
@@ -58,20 +61,20 @@ source commit
   -> pin exact immutable SHA in the existing Agent-Skill-Source governance registry
   -> governance validation
   -> skill-sync
-  -> ~/.agents/skills/MY_executor (read-only deployment)
+  -> ~/.agents/skills/my_pi_executor (read-only deployment)
   -> Hermes operator / Codex consume that deployed copy
 ```
 
-`MY_` is only a naming convention for our own Skills. It does not create a second governance category, registry, directory, or deployment path.
+The governance registry must point to this repository root; no subpath is required.
 
 ## Hermes cleanup
 
-After the governed `MY_executor` release is present, Hermes requires only:
+After the governed `my_pi_executor` release is present, Hermes requires only:
 
 ```text
-Main/control -> operator -> MY_executor Skill
+Main/control -> operator -> my_pi_executor Skill
 ```
 
-The legacy `persistent-executor-routing` Skill, `pi-executor-bridge` plugin, `executor-harness.service`, global socket, and Host are obsolete Executor layers. `migration/cleanup_legacy_oracle.sh` retires only those legacy layers after verifying `MY_executor` is already deployed.
+The legacy `persistent-executor-routing` Skill, `pi-executor-bridge` plugin, `executor-harness.service`, global socket, Host, and legacy shared `executor` Skill are obsolete Executor layers. `migration/cleanup_legacy_oracle.sh` retires only those legacy layers after verifying `my_pi_executor` is already deployed.
 
 `Ask Hermes`, custom MCPs, CC Connect MCPs, and other messaging bridges are out of scope.
