@@ -1,10 +1,16 @@
 {
   "name": "my_pi_executor",
-  "version": "5.0.0",
+  "version": "6.0.0",
   "private": true,
   "type": "module",
   "description": "Task-scoped Pi Executor Skill using the public Pi Node SDK.",
   "scripts": {
-    "check": "node --test tests/entrypoint.test.mjs"
+    "check": "node --test tests/entrypoint.test.mjs",
+    "check:live": "node tests/live-e2e.mjs"
+  },
+  "myPiExecutor": {
+    "maxReviewRounds": 3,
+    "testedPiCodingAgent": ["0.84.2", "0.85.1"],
+    "testedPiSubagents": ["0.59.0"]
   }
 }
