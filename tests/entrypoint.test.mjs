@@ -59,7 +59,7 @@ function makeSession(manager) {
         messages.push({ role: 'assistant', stopReason: 'error', errorMessage: '402: Insufficient Balance', content: [] });
         return;
       }
-      final = 'MISSION_ID: mission-test\\nSTATUS: PASS';
+      final = process.env.FAKE_PI_FINAL || 'STATUS: PASS\\nMISSION_ID: mission-test\\nROUNDS: 1';
       messages.push({ role: 'assistant', stopReason: 'stop', content: [{ type: 'text', text: final }] });
     },
     getLastAssistantText() { return final; },
@@ -75,6 +75,12 @@ export async function createAgentSessionServices(options) {
   };
 }
 export async function createAgentSessionFromServices(options) {
+  if (process.env.FAKE_PI_OPTIONS_CAPTURE) {
+    fs.writeFileSync(process.env.FAKE_PI_OPTIONS_CAPTURE, JSON.stringify({
+      hasModel: Object.hasOwn(options, 'model'),
+      hasThinkingLevel: Object.hasOwn(options, 'thinkingLevel'),
+    }));
+  }
   return { session: makeSession(options.sessionManager) };
 }
 export async function createAgentSessionRuntime(factory, options) {
@@ -124,6 +130,9 @@ test('two run calls create independent Pi AgentSession parents', async () => {
   assert.equal(second.code, 0, second.stderr);
   const a = JSON.parse(first.stdout);
   const b = JSON.parse(second.stdout);
+  assert.equal(a.status, 'PASS');
+  assert.equal(a.missionId, 'mission-test');
+  assert.equal(a.rounds, 1);
   assert.notEqual(a.runtimePid, b.runtimePid);
   assert.notEqual(a.sessionId, b.sessionId);
   assert.notEqual(a.sessionFile, b.sessionFile);
@@ -139,6 +148,7 @@ test('run delegates orchestration without recursively invoking the entrypoint', 
   const prompt = fs.readFileSync(capture, 'utf8');
   assert.match(prompt, /ALREADY_ACTIVE_MY_PI_EXECUTOR_PARENT=1/);
   assert.match(prompt, /Never invoke my_pi_executor, entrypoint\.mjs, or another parent Runtime/);
+  assert.match(prompt, /MAX_FRESH_REVIEW_ROUNDS: 3/);
   assert.equal(prompt.includes(['workflow', 'ScriptPath'].join('')), false);
   assert.equal(prompt.includes(['workflows', 'executor'].join('/')), false);
 });
@@ -150,12 +160,99 @@ test('answer reopens the exact Pi session and keeps the Mission lineage', async 
   const result = await run([
     'answer', '--workspace', tmp, '--session', sessionFile, '--mission', 'mission-123',
   ], { answer: 'approved' }, {
-    MY_PI_EXECUTOR_SDK_MODULE: fakeSdk(tmp), FAKE_PI_CAPTURE: capture,
+    MY_PI_EXECUTOR_SDK_MODULE: fakeSdk(tmp),
+    FAKE_PI_CAPTURE: capture,
+    FAKE_PI_FINAL: 'STATUS: PASS\nMISSION_ID: mission-123\nROUNDS: 1',
   });
   assert.equal(result.code, 0, result.stderr);
   const output = JSON.parse(result.stdout);
   assert.equal(output.sessionFile, sessionFile);
+  assert.equal(output.missionId, 'mission-123');
   assert.match(fs.readFileSync(capture, 'utf8'), /SAME Mission mission-123/);
+});
+
+test('answer and recover fail closed when Pi returns a different Mission id', async () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'my-pi-executor-test-'));
+  const sessionFile = path.join(tmp, 'original.jsonl');
+  for (const [command, input] of [['answer', { answer: 'approved' }], ['recover', undefined]]) {
+    const result = await run([
+      command, '--workspace', tmp, '--session', sessionFile, '--mission', 'mission-expected',
+    ], input, {
+      MY_PI_EXECUTOR_SDK_MODULE: fakeSdk(tmp),
+      FAKE_PI_FINAL: 'STATUS: PASS\nMISSION_ID: mission-replacement\nROUNDS: 1',
+    });
+    assert.notEqual(result.code, 0);
+    assert.equal(result.stdout, '');
+    assert.match(result.stderr, /returned Mission mission-replacement, expected mission-expected/);
+  }
+});
+
+test('final result contract rejects malformed or legacy output', async () => {
+  const invalidFinals = [
+    'STATUS: SETTLED\nMISSION_ID: mission-test\nROUNDS: 1',
+    'STATUS: PASS\nROUNDS: 1',
+    'STATUS: PASS\nMISSION_ID: mission-test',
+    'STATUS: PASS\nSTATUS: FAILED\nMISSION_ID: mission-test\nROUNDS: 1',
+  ];
+  for (const final of invalidFinals) {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'my-pi-executor-test-'));
+    const result = await run(['run'], {
+      title: 'test', goal: 'do a bounded test', acceptance: ['returns a contract'], workspace: tmp,
+    }, { MY_PI_EXECUTOR_SDK_MODULE: fakeSdk(tmp), FAKE_PI_FINAL: final });
+    assert.notEqual(result.code, 0);
+    assert.equal(result.stdout, '');
+    assert.match(result.stderr, /Pi final response/);
+  }
+});
+
+test('final result contract preserves every supported outcome', async () => {
+  for (const status of ['PASS', 'FAILED', 'NEEDS_DECISION', 'EXTERNAL_DEPENDENCY']) {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'my-pi-executor-test-'));
+    const result = await run(['run'], {
+      title: 'test', goal: 'do a bounded test', acceptance: ['returns a contract'], workspace: tmp,
+    }, {
+      MY_PI_EXECUTOR_SDK_MODULE: fakeSdk(tmp),
+      FAKE_PI_FINAL: `STATUS: ${status}\nMISSION_ID: mission-test\nROUNDS: 0`,
+    });
+    assert.equal(result.code, 0, result.stderr);
+    assert.equal(JSON.parse(result.stdout).status, status);
+  }
+});
+
+test('review rounds above the runtime cap return FAILED', async () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'my-pi-executor-test-'));
+  const result = await run(['run'], {
+    title: 'test', goal: 'do a bounded test', acceptance: ['returns a contract'], workspace: tmp,
+  }, {
+    MY_PI_EXECUTOR_SDK_MODULE: fakeSdk(tmp),
+    FAKE_PI_FINAL: 'STATUS: PASS\nMISSION_ID: mission-test\nROUNDS: 4',
+  });
+  assert.equal(result.code, 0, result.stderr);
+  const output = JSON.parse(result.stdout);
+  assert.equal(output.status, 'FAILED');
+  assert.equal(output.missionId, 'mission-test');
+  assert.equal(output.rounds, 4);
+  assert.match(output.failure, /round cap exceeded/);
+});
+
+test('normal execution uses Pi provider settings and leaves BWS opt-in', async () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'my-pi-executor-test-'));
+  const projectFile = path.join(tmp, 'bws-project-id');
+  const optionsCapture = path.join(tmp, 'options.json');
+  fs.writeFileSync(projectFile, 'would-trigger-bws-if-it-were-default');
+  const result = await run(['run'], {
+    title: 'test', goal: 'do a bounded test', acceptance: ['returns PASS'], workspace: tmp,
+  }, {
+    MY_PI_EXECUTOR_DISABLE_BWS: '0',
+    MY_PI_EXECUTOR_BWS_PROJECT_FILE: projectFile,
+    MY_PI_EXECUTOR_SDK_MODULE: fakeSdk(tmp),
+    FAKE_PI_OPTIONS_CAPTURE: optionsCapture,
+  });
+  assert.equal(result.code, 0, result.stderr);
+  assert.deepEqual(JSON.parse(fs.readFileSync(optionsCapture, 'utf8')), {
+    hasModel: false,
+    hasThinkingLevel: false,
+  });
 });
 
 test('provider error fails closed', async () => {

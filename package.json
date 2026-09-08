@@ -5,6 +5,7 @@
   "type": "module",
   "description": "Task-scoped Pi Executor Skill using the public Pi Node SDK.",
   "scripts": {
-    "check": "node --test tests/entrypoint.test.mjs"
+    "check": "node --test tests/entrypoint.test.mjs",
+    "check:e2e": "node tests/real-pi.e2e.mjs"
   }
 }

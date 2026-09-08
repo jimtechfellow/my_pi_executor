@@ -29,7 +29,7 @@ entrypoint.mjs recover --workspace /absolute/path --session <session-file> --mis
 When `ALREADY_ACTIVE_MY_PI_EXECUTOR_PARENT=1` appears in the request, this parent is the active executor. Follow this contract directly and never invoke this Skill, its entrypoint, or another parent Runtime recursively.
 
 1. Before delegating, create exactly one Mission with native `mission.create` and use it for the whole call.
-2. Apply the installed pi-subagents parent-controlled review-loop technique: one implementation worker, fresh-context reviewers, then one fix worker when needed. Stop on acceptance, a genuine external/HITL dependency, or after three review rounds.
+2. Apply the installed pi-subagents parent-controlled review-loop technique: one implementation worker, fresh-context reviewers, then one fix worker when needed. Stop on acceptance, a genuine external/HITL dependency, or after three review rounds. `ROUNDS` counts fresh-review rounds across the whole Mission; never start a fourth round.
 3. Attach retained runs to the Mission. The Pi parent owns Mission updates and supervisor interaction; children do not.
 4. If a child requests a decision, record one open decision with `mission.update`, preserve the retained run, and return `NEEDS_DECISION` without guessing.
 5. On `answer`, use native `mission.show`, resolve that open decision, inspect native retained-child state, and continue only the same lineage.
@@ -54,3 +54,5 @@ ARTIFACTS:
 ```
 
 Pi and pi-subagents exclusively own Mission and session state. Do not parse or mirror their storage.
+
+The entrypoint parses `STATUS`, `MISSION_ID`, and `ROUNDS` from this result. Unknown statuses, duplicate or missing required fields, a changed Mission id during `answer` or `recover`, and invalid round counts fail closed. A reported round count above three is returned as `FAILED`.
