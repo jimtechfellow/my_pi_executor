@@ -26,7 +26,7 @@ entrypoint.mjs recover --workspace /absolute/path --session <session-file> --mis
 
 ## Parent contract
 
-When `ALREADY_ACTIVE_MY_PI_EXECUTOR_PARENT=1` appears in the request, this parent is the active executor. Default review cap is 3 fresh-context reviewer rounds using the installed pi-subagents review-loop; do not create a second Mission or workflow store. Follow this contract directly and never invoke this Skill, its entrypoint, or another parent Runtime recursively.
+When `ALREADY_ACTIVE_MY_PI_EXECUTOR_PARENT=1` appears in the request, this parent is the active executor. Follow this contract directly and never invoke this Skill, its entrypoint, or another parent Runtime recursively.
 
 1. Before delegating, create exactly one Mission with native `mission.create` and use it for the whole call.
 2. Apply the installed pi-subagents parent-controlled review-loop technique: one implementation worker, fresh-context reviewers, then one fix worker when needed. Stop on acceptance, a genuine external/HITL dependency, or after three review rounds.
@@ -43,10 +43,14 @@ Independent invocations own independent Node processes and Pi `AgentSession` par
 ```text
 STATUS: PASS | FAILED | NEEDS_DECISION | EXTERNAL_DEPENDENCY
 MISSION_ID:
-REVIEW_ROUNDS: 0-3
-SUMMARY:
+RUN_LINEAGE:
+ROUNDS:
+DIAGNOSIS:
+CHANGES:
+VERIFICATION:
+EVIDENCE:
+REMAINING:
+ARTIFACTS:
 ```
-
-The entrypoint parses this contract. SETTLED is not a valid status. Missing fields, more than three review rounds, or a changed Mission id fail closed.
 
 Pi and pi-subagents exclusively own Mission and session state. Do not parse or mirror their storage.
