@@ -1,6 +1,6 @@
 {
   "name": "my_pi_executor",
-  "version": "5.0.0",
+  "version": "6.0.0",
   "private": true,
   "type": "module",
   "description": "Task-scoped Pi Executor Skill using the public Pi Node SDK.",
